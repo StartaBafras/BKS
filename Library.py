@@ -30,7 +30,7 @@ class MainWindow(QMainWindow):
 
         settings=menubar.addMenu("Ayarlar") #Seçenekler de olabilir
 
-        create_database=settings.addAction("Veritabanı Oluştur")
+        option=settings.addAction("Seçenekler")
         #o dizinde olup olmadığını kontrol etmeli
 
 
@@ -47,6 +47,9 @@ class MainWindow(QMainWindow):
         if action.text() == "Kitap Ekle":
             yazi=action.text()
             self.open.new_tab(add_book(),yazi)
+        elif action.text() == "Üye Ekle":
+            yazi=action.text()
+            self.open.new_tab(add_member(),yazi)
 
 class Window(QWidget):
     def __init__(self):
@@ -108,7 +111,23 @@ class add_book(QWidget):
         self.setLayout(f_box)
         self.show()
     
-    def save(self):pass
+    def save(self):
+        try:
+
+            bo_n=self.book_name_t.text()
+            bo_a=self.book_author_t.text()
+            pa_h=self.publishing_house_t.text()
+            bo_t=self.book_type_t.text()
+            is_bn=self.isbn_t.text()
+            ab_b=self.about_book_t.text()
+
+            con=sqlite3.connect("library.db")
+            cursor=con.cursor()
+            cursor.execute("insert into bookshelf values(?,?,?,?,?,?)",(bo_n,bo_a,pa_h,bo_t,is_bn,ab_b))
+            con.close()
+            QMessageBox.about(self,"Veritabanı","Kayıt Edildi")
+        except sqlite3.OperationalError:
+            QMessageBox.about(self,"sqlite3.OperationalError","Veritabanına bağlanılamadı lütfen yeniden oluşturmayı deneyin veya geliştirici ile iletişime geçin")
 
 class add_member(QWidget):
     def __init__(self):
@@ -126,8 +145,35 @@ class add_member(QWidget):
         self.save_button=QPushButton("Kayıt Et")
         self.save_button.clicked.connect(self.save)
 
+        f_box=QFormLayout()
+
+        f_box.addWidget(self.name_surname)
+        f_box.addWidget(self.name_surname_t)
+
+        f_box.addWidget(self.phone_number)
+        f_box.addWidget(self.phone_number_t)
+
+        f_box.addWidget(self.tc_number)
+        f_box.addWidget(self.tc_number_t)
+
+        f_box.addWidget(self.save_button)
+
+        self.setLayout(f_box)
+
     def save(self):
-        pass
+        try:
+            na_s=self.name_surname_t.text()
+            ph_n=self.phone_number_t.text()
+            tc_n=self.tc_number_t.text()
+
+
+            con=sqlite3.connect("library.db")
+            cursor=con.cursor()
+            cursor.execute("insert into members values(?,?,?)",(na_s,ph_n,tc_n))
+            con.close()
+            QMessageBox.about(self,"Veritabanı","Kayıt Edildi")
+        except sqlite3.OperationalError:
+            QMessageBox.about(self,"sqlite3.OperationalError","Veritabanına bağlanılamadı lütfen yeniden oluşturmayı deneyin veya geliştirici ile iletişime geçin")
         
 
 class barrow_book(QWidget):
@@ -137,10 +183,36 @@ class barrow_book(QWidget):
         self.book_isbn=QLabel("Kitap ISBN")
         self.book_isbn_t=QLineEdit()
 
+        self.member_tc=QLabel("Üye T.C. Numarası")
+        self.member_tc_t=QLineEdit()
+
+        #ödünç süresi ne kadar olacak?
+
+        
 
 
 
+class options(QWidget):
+    def __init__(self):
+        super().__init__()
 
+
+        self.create_db=QPushButton("Veritabanı Oluştur")
+        self.create_db.clicked.connect(self.new_db)
+
+        f_box=QFormLayout()
+
+        f_box.addWidget(self.create_db)
+
+        self.setLayout(f_box)
+
+
+    def new_db(self):
+        con=sqlite3.connect("library.db")
+        cursor=con.cursor()
+        cursor.execute("create table if not exists bookshelf",("book_name","book_author","publishing_house","book_type","isbn","about_book"))
+        cursor.execute("create table if not exists members",("name_surname","phone_number","tc_number",))
+        #olup olmaması kontrol edilmeli
 
 app = QApplication(sys.argv)
 pencere = MainWindow()
